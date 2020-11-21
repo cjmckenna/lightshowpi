@@ -1,0 +1,65 @@
+def remote = [:]
+remote.name = 'lightshowClient'
+remote.host = env.lightshow_client
+remote.user = env.remote_id
+remote.password = env.remote_password
+remote.allowAnyHosts = true
+
+pipeline {
+    agent any
+    stages {
+        stage('Send Show Started SMS') {
+            steps {
+                mail to: env.sms_address,               
+                    subject: "Lightshow Started" ,
+                    body: """Build $BUILD_NUMBER Started.    
+                    Go to $BUILD_URL for more info."""
+            }
+        }
+        stage('Start Client') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: "sh /home/pi/lightshowpi/scripts/startremote.sh", sudo: true
+                    sleep 2
+                }
+            }
+        }
+        stage("Kill All Lights") {
+            steps {
+                script {
+                    sshCommand remote: remote, command: "sh /home/pi/lightshowpi/scripts/turnoffallfast.sh"
+                }
+            }
+        }
+        stage('Play Santa Audio') {
+            steps {
+                sh "sudo omxplayer /home/pi/lightshowpi/music/hohoho.mp3"
+                sleep 1
+            }
+        }
+        stage("Run Show") {
+            steps {
+                sh "/home/pi/lightshowpi/scripts/runshow.sh"
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                echo "killing any leftover lightshow stuff that may be running on the server"
+                sh "/home/pi/lightshowpi/scripts/cleanupserver.sh"
+                echo "killing the lightshow stuff on the client"
+                sshCommand remote: remote, command: "sh /home/pi/lightshowpi/scripts/cleanupclient.sh"
+                echo "Turning all the lights off"
+                sshCommand remote: remote, command: "sh /home/pi/lightshowpi/scripts/turnoffalllights.sh"
+                echo "turning all the lights on"
+                sshCommand remote: remote, command: "sh /home/pi/lightshowpi/scripts/turnonalllights.sh"
+                echo "Send Show Ended SMS"
+                mail to: env.sms_address,               
+                subject: "Lightshow Ended" ,
+                body: """Build $BUILD_NUMBER Ended with status ${currentBuild.currentResult}.    
+                Go to $BUILD_URL for more info."""
+            }
+        }
+    }
+}
