@@ -1,6 +1,8 @@
 # lightshowpi
 
-This repository contains components to leverage and Jenkins pipeline to control an animated lightshow using lightshopi.  These are here just in case anyone would like some inspiration for using Jenkins with lightshowPi.
+This repository contains components to leverage and Jenkins pipeline to control an animated lightshow using lightshowpi.  These are here just in case anyone would like some inspiration for using Jenkins with lightshowPi
+
+LightshowPi can be found here: http://lightshowpi.org/
 
 The driving force behind this effort was to give me more flexibility of what I can do before a show, during a show and after a show. It was also a chance to use my dev/ops skills on something fun rather than work.
 
